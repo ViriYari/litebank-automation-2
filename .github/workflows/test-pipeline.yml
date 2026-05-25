@@ -6,7 +6,7 @@ on:
       - main
 
 jobs:
-  selenium-tests:
+  test:
     runs-on: ubuntu-latest
 
     steps:
@@ -19,15 +19,23 @@ jobs:
           distribution: temurin
           java-version: 21
 
-      - name: Levantar sistema (Docker)
-        run: docker compose up -d
+      - name: Levantar Docker
+        run: docker compose up -d --build
 
-      - name: Esperar servicios
-        run: sleep 20
+      - name: Ver contenedores
+        run: docker ps
+
+      - name: Esperar frontend (IMPORTANTE)
+        run: |
+          echo "Esperando frontend..."
+          for i in {1..30}; do
+            curl -s http://localhost:5173 && break
+            sleep 2
+          done
 
       - name: Ejecutar tests
         run: mvn test
 
-      - name: Apagar contenedores
+      - name: Apagar Docker
         if: always()
         run: docker compose down
