@@ -35,7 +35,7 @@ services:
       - qa-network
 
   frontend:
-    image: node:18
+    image: node:22
     container_name: qa-frontend
     working_dir: /app
     volumes:
