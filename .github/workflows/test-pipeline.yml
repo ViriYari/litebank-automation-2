@@ -32,9 +32,14 @@ jobs:
             curl -s http://localhost:5173 && break
             sleep 2
           done
+          echo "Frontend no listo"
+          exit 1
+
+      - name: Ver contenedores
+        run: docker ps
 
       - name: Ejecutar tests
-        run: mvn test -DBASE_URL=http://frontend:5173
+        run: mvn test
 
       - name: Apagar Docker
         if: always()
