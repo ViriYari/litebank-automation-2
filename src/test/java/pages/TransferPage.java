@@ -49,13 +49,13 @@ public class TransferPage {
     }
 
     
-    public String waitForProcessingMessage(String expectedText) {
-    // Espera activamente a que el elemento contenga EXACTAMENTE el texto esperado
-    wait.until(ExpectedConditions.textToBePresentInElementLocated(processingMsg, expectedText));
-    
-    // Una vez cumplido, recupera el texto real para retornarlo
-    return driver.findElement(processingMsg).getText();
+     public String getProcessingMessageText() {
+    // 1. Espera a que sea visible y al mismo tiempo lo guarda
+    WebElement element = wait.until(ExpectedConditions.visibilityOfElementLocated(processingMsg));
+    // 2. Devuelve el texto real del elemento
+    return element.getText();
 }
+
 }
 
    

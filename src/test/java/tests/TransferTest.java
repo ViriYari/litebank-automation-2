@@ -2,6 +2,9 @@ package tests;
 
 import base.BaseTest;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import org.junit.jupiter.api.Assertions;
+
 import pages.TransferPage;
 import org.junit.jupiter.api.Test;
 import org.openqa.selenium.support.ui.WebDriverWait;
@@ -20,9 +23,11 @@ public class TransferTest extends BaseTest {
         page.createTransfer("98765", "100");
 
  
-    String textoReal = page.waitForProcessingMessage("Estado: PENDIENTE");
-    assertEquals("Estado: PENDIENTE", textoReal);
+    String textoReal = page.getProcessingMessageText();
+    Assertions.assertEquals("Estado: PENDIENTE", textoReal);
+
 
     }
+
 }
 
