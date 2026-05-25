@@ -1,0 +1,33 @@
+name: Selenium Async Tests
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  selenium-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Levantar sistema (Docker)
+        run: docker compose up -d
+
+      - name: Esperar servicios
+        run: sleep 20
+
+      - name: Ejecutar tests
+        run: mvn test
+
+      - name: Apagar contenedores
+        if: always()
+        run: docker compose down
