@@ -48,15 +48,12 @@ public class TransferPage {
 
     
     public String waitForProcessingMessage(String expectedText) {
-
-    return wait.until(driver ->
-        driver.findElement(processingMsg)
-              .getText()
-              .equals(expectedText)
-            ? expectedText
-            : null
+    WebElement element = wait.until(
+        ExpectedConditions.presenceOfElementLocated(processingMsg)
     );
+    wait.until(driver -> element.getText().equals(expectedText));
+    return expectedText;
+}
 }
 
    
-}
