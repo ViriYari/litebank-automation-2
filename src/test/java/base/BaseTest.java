@@ -15,20 +15,19 @@ public class BaseTest {
 
     @BeforeEach
     void setUp() {
-        // Configuraciones para que Chrome funcione en la nube (GitHub Actions)
-        WebDriverManager.chromedriver().setup();
+         ChromeOptions options = new ChromeOptions();
 
-        ChromeOptions options = new ChromeOptions();
-        options.addArguments("--headless=new"); // Ejecuta sin abrir ventana
-        options.addArguments("--no-sandbox");   // Evita problemas de seguridad en Linux
-        options.addArguments("--disable-dev-shm-usage"); // Optimiza el uso de memoria
+    // Para GitHub Actions / Linux
+    options.addArguments("--headless=new");
+    options.addArguments("--no-sandbox");
+    options.addArguments("--disable-dev-shm-usage");
 
-        driver = new ChromeDriver(options); // Pasamos las opciones aquí
+    driver = new ChromeDriver(options);
 
-        driver.manage().window().maximize();
+    driver.manage().window().maximize();
 
-        driver.manage().timeouts()
-                .implicitlyWait(Duration.ofSeconds(5));
+    driver.manage().timeouts()
+            .implicitlyWait(Duration.ofSeconds(5));
     }
 
     @AfterEach
