@@ -1,0 +1,14 @@
+{
+  "name": "qa-dummy-app-broker",
+  "version": "1.0.0",
+  "description": "App interactiva para simular microservicios asíncronos en clase",
+  "main": "server.js",
+  "scripts": {
+    "start-server": "node server.js",
+    "start-worker": "node worker.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "kafkajs": "^2.2.4"
+  }
+}
