@@ -10,37 +10,44 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 1. Clonar repo
       - name: Checkout repo
         uses: actions/checkout@v4
 
+      # 2. Configurar Java
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 21
 
-      - name: Levantar Docker
+      # 3. Levantar Docker (Kafka + frontend + todo)
+      - name: Levantar servicios
         run: docker compose up -d --build
 
+      # 4. Ver contenedores (debug)
       - name: Ver contenedores
         run: docker ps
 
-      - name: Esperar frontend (IMPORTANTE)
+      # 5. Esperar frontend listo (CRÍTICO)
+      - name: Esperar frontend
         run: |
           echo "Esperando frontend..."
           for i in {1..30}; do
-            curl -s http://localhost:5173 && break
+            curl -s http://localhost:5173 && echo "OK frontend" && exit 0
             sleep 2
           done
-          echo "Frontend no listo"
+          echo "Frontend NO disponible"
+          docker logs qa-frontend || true
           exit 1
 
-      - name: Ver contenedores
-        run: docker ps
-
+      # 6. Ejecutar tests con variable base URL
       - name: Ejecutar tests
         run: mvn test
+        env:
+          BASE_URL: http://localhost:5173
 
+      # 7. Apagar servicios siempre
       - name: Apagar Docker
         if: always()
         run: docker compose down
