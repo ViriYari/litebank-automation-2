@@ -24,11 +24,7 @@
     <version>5.10.2</version>
     <scope>test</scope>
   </dependency> 
-  <dependency>
-    <groupId>ch.qos.logback</groupId>
-    <artifactId>logback-classic</artifactId>
-    <version>1.5.6</version>
-</dependency>
+ 
   
    <dependency>
     <groupId>org.seleniumhq.selenium</groupId>
