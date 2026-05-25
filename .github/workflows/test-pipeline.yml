@@ -34,7 +34,7 @@ jobs:
           done
 
       - name: Ejecutar tests
-        run: mvn test
+        run: mvn test -DBASE_URL=http://frontend:5173
 
       - name: Apagar Docker
         if: always()

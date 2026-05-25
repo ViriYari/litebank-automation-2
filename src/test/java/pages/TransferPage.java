@@ -27,9 +27,10 @@ public class TransferPage {
    
 
     // Acciones
-    public void openApp() {
-        driver.get("http://localhost:5173");
-    }
+   public void openApp() {
+    String baseUrl = System.getProperty("BASE_URL", "http://localhost:5173");
+    driver.get(baseUrl);
+}
 
     public void fillForm(String target, String amount) {
         driver.findElement(targetInput).sendKeys(target);
