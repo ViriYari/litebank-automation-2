@@ -15,7 +15,9 @@ public class TransferPage {
 
     public TransferPage(WebDriver driver) {
         this.driver = driver;
-        this.wait = new WebDriverWait(driver, Duration.ofSeconds(15));
+        this.wait = new WebDriverWait(driver, Duration.ofSeconds(15
+            
+        ));
     }
 
     // Localizadores
@@ -48,11 +50,11 @@ public class TransferPage {
 
     
     public String waitForProcessingMessage(String expectedText) {
-    WebElement element = wait.until(
-        ExpectedConditions.presenceOfElementLocated(processingMsg)
-    );
-    wait.until(driver -> element.getText().equals(expectedText));
-    return expectedText;
+    // Espera activamente a que el elemento contenga EXACTAMENTE el texto esperado
+    wait.until(ExpectedConditions.textToBePresentInElementLocated(processingMsg, expectedText));
+    
+    // Una vez cumplido, recupera el texto real para retornarlo
+    return driver.findElement(processingMsg).getText();
 }
 }
 
