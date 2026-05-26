@@ -46,8 +46,10 @@ jobs:
         run: mvn test
         env:
           BASE_URL: http://localhost:5173
-
-      # 7. Apagar servicios siempre
+    
+          # 7. Apagar servicios siempre
       - name: Apagar Docker
         if: always()
         run: docker compose down
+
+     

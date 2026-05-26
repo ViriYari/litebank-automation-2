@@ -1,23 +1,14 @@
 package tests;
 
 import base.BaseTest;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
-import java.time.Duration;
-
-import org.junit.jupiter.api.Assertions;
-
 import pages.TransferPage;
 import org.junit.jupiter.api.Test;
-import org.openqa.selenium.By;
-import org.openqa.selenium.support.ui.ExpectedConditions;
-import org.openqa.selenium.support.ui.WebDriverWait;
+
 
 public class TransferTest extends BaseTest {
 
-    @Test
+@Test
     void e2e_transfer_test() {
-
         TransferPage page = new TransferPage(driver);
         
         // 1. Abrir aplicación
@@ -26,17 +17,11 @@ public class TransferTest extends BaseTest {
         // 2. Ejecutar flujo
         page.createTransfer("98765", "100");
 
-        
-
-    
-    
-
-
-        
-}
-
-
+  
+    }
     }
 
 
 
+
+    
