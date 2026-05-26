@@ -2,6 +2,7 @@ package pages;
 
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions; // Importante
 import org.openqa.selenium.support.ui.WebDriverWait;
 import java.time.Duration;
@@ -20,7 +21,7 @@ public class TransferPage {
     private By targetInput = By.xpath("//*[@id=\"root\"]/div/div/input[1]");
     private By amountInput = By.xpath("//*[@id=\"root\"]/div/div/input[2]");
     private By sendButton = By.xpath("//*[@id=\"root\"]/div/div/button");
-    private By processingMsg = By.xpath("//*[@id=\"status-box\"]");
+    private By processingMsg = By.id("status-box");
 
     // Acciones con Polling
     public void openApp() {
@@ -43,6 +44,11 @@ public class TransferPage {
     public void createTransfer(String target, String amount) {
         fillForm(target, amount);
         clickSend();
-   
-    }
+ }
+     public String getProcessingMessageText() {
+    // 1. Espera a que sea visible y al mismo tiempo lo guarda
+    WebElement element = wait.until(ExpectedConditions.visibilityOfElementLocated(processingMsg));
+    // 2. Devuelve el texto real del elemento
+    return element.getText();
+}
 }
