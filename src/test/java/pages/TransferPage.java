@@ -45,8 +45,17 @@ public class TransferPage {
         fillForm(target, amount);
         clickSend();
  }
-    public String getStatusMessage() {
-    // Esto espera a que el elemento sea visible y devuelve su texto actual
-    return wait.until(ExpectedConditions.visibilityOfElementLocated(processingMsg)).getText();
+    public void clickSendButtonAndVerifyPending() {
+    // 1. Hacemos clic
+    driver.findElement(sendButton).click();
+
+    // 2. Aquí está el secreto: Esperamos a que el texto "PENDIENTE" aparezca 
+    // en el elemento status-box antes de continuar.
+    // Esto "congela" el test hasta que el mensaje aparezca.
+    WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+    wait.until(ExpectedConditions.textToBePresentInElementLocated(
+        By.xpath("//*[@id=\"status-box\"]"), 
+        "PENDIENTE"
+    ));
 }
 }
