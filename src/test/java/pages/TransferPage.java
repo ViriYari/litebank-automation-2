@@ -45,10 +45,8 @@ public class TransferPage {
         fillForm(target, amount);
         clickSend();
  }
-     public String getProcessingMessageText() {
-    // 1. Espera a que sea visible y al mismo tiempo lo guarda
-    WebElement element = wait.until(ExpectedConditions.visibilityOfElementLocated(processingMsg));
-    // 2. Devuelve el texto real del elemento
-    return element.getText();
+    public String getStatusMessage() {
+    // Esto espera a que el elemento sea visible y devuelve su texto actual
+    return wait.until(ExpectedConditions.visibilityOfElementLocated(processingMsg)).getText();
 }
 }
