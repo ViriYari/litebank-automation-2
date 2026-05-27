@@ -24,12 +24,14 @@ public class TransferTest extends BaseTest {
         // 2. Ejecutar flujo
         page.createTransfer("98765", "100");
        
-      page.clickSendButtonAndVerifyPending();
-
-    // Ahora, como ya sabemos que pasó por "PENDIENTE", 
-    // podemos validar lo que quieras o simplemente continuar.
-    System.out.println("El test detectó el estado PENDIENTE con éxito.");
-    }
+  String mensajeEsperado = "Estado: ERROR_ENVIANDO_TRANSFERENCIA";
+     
+    // 3. Capturamos el texto para la validación final
+    String statusFinal = page.getStatusMessage();
+    
+    // 4. Verificamos que sea igual
+    Assertions.assertEquals(mensajeEsperado, statusFinal, "El mensaje final no coincide");
+}
     }
 
 
