@@ -1,4 +1,4 @@
 -------------------------------------------------------------------------------
 Test set: tests.TransferTest
 -------------------------------------------------------------------------------
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 7.907 s - in tests.TransferTest
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 17.009 s - in tests.TransferTest

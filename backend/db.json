@@ -1482,6 +1482,190 @@
       "responseTimeMs": 11555,
       "workerBucket": "RANDOM_FAST",
       "effectiveDelayMs": 11515
+    },
+    "TX-1779947107335": {
+      "target": "98765",
+      "amount": "100",
+      "status": "ERROR_PUBLICACION",
+      "simulationProfile": "RANDOM",
+      "createdAt": 1779947107335,
+      "processedAt": null,
+      "responseTimeMs": null,
+      "workerBucket": null,
+      "publicationError": "Connection timeout"
+    },
+    "TX-1779947661065": {
+      "target": "32",
+      "amount": "34",
+      "status": "ERROR_PUBLICACION",
+      "simulationProfile": "RANDOM",
+      "createdAt": 1779947661065,
+      "processedAt": null,
+      "responseTimeMs": null,
+      "workerBucket": null,
+      "publicationError": "Connection timeout"
+    },
+    "TX-1779947760834": {
+      "target": "32",
+      "amount": "34",
+      "status": "ERROR_PUBLICACION",
+      "simulationProfile": "RANDOM",
+      "createdAt": 1779947760834,
+      "processedAt": null,
+      "responseTimeMs": null,
+      "workerBucket": null,
+      "publicationError": "Connection timeout"
+    },
+    "TX-1779947825988": {
+      "target": "32",
+      "amount": "34",
+      "status": "ERROR_PUBLICACION",
+      "simulationProfile": "RANDOM",
+      "createdAt": 1779947825988,
+      "processedAt": null,
+      "responseTimeMs": null,
+      "workerBucket": null,
+      "publicationError": "Connection timeout"
+    },
+    "TX-1779948292360": {
+      "target": "123",
+      "amount": "32",
+      "status": "ERROR_PUBLICACION",
+      "simulationProfile": "RANDOM",
+      "createdAt": 1779948292360,
+      "processedAt": null,
+      "responseTimeMs": null,
+      "workerBucket": null,
+      "publicationError": "Connection error: "
+    },
+    "TX-1779950198381": {
+      "target": "rr",
+      "amount": "443",
+      "status": "PENDIENTE",
+      "simulationProfile": "RANDOM",
+      "createdAt": 1779950198381,
+      "processedAt": null,
+      "responseTimeMs": null,
+      "workerBucket": null
+    },
+    "TX-1779950243221": {
+      "target": "98765",
+      "amount": "100",
+      "status": "ERROR_PUBLICACION",
+      "simulationProfile": "RANDOM",
+      "createdAt": 1779950243221,
+      "processedAt": null,
+      "responseTimeMs": null,
+      "workerBucket": null,
+      "publicationError": "Connection timeout"
+    },
+    "TX-1779950339579": {
+      "target": "5445",
+      "amount": "545",
+      "status": "ERROR_PUBLICACION",
+      "simulationProfile": "RANDOM",
+      "createdAt": 1779950339579,
+      "processedAt": null,
+      "responseTimeMs": null,
+      "workerBucket": null,
+      "publicationError": "Connection timeout"
+    },
+    "TX-1779951187842": {
+      "target": "98765",
+      "amount": "100",
+      "status": "PENDIENTE",
+      "simulationProfile": "RANDOM",
+      "createdAt": 1779951187842,
+      "processedAt": null,
+      "responseTimeMs": null,
+      "workerBucket": null
+    },
+    "TX-1779951195618": {
+      "target": "32",
+      "amount": "34",
+      "status": "PENDIENTE",
+      "simulationProfile": "RANDOM",
+      "createdAt": 1779951195618,
+      "processedAt": null,
+      "responseTimeMs": null,
+      "workerBucket": null
+    },
+    "TX-1779951206730": {
+      "target": "5445",
+      "amount": "545",
+      "status": "ERROR_PUBLICACION",
+      "simulationProfile": "RANDOM",
+      "createdAt": 1779951206730,
+      "processedAt": null,
+      "responseTimeMs": null,
+      "workerBucket": null,
+      "publicationError": "Connection timeout"
+    },
+    "TX-1779951574121": {
+      "target": "3343",
+      "amount": "32",
+      "status": "APROBADO",
+      "simulationProfile": "RANDOM",
+      "createdAt": 1779951574121,
+      "processedAt": 1779951595186,
+      "responseTimeMs": 21065,
+      "workerBucket": "RANDOM_FAST",
+      "effectiveDelayMs": 18002
+    },
+    "TX-1779985503542": {
+      "target": "434",
+      "amount": "43",
+      "status": "APROBADO",
+      "simulationProfile": "RANDOM",
+      "createdAt": 1779985503542,
+      "processedAt": 1779985521727,
+      "responseTimeMs": 18185,
+      "workerBucket": "RANDOM_FAST",
+      "effectiveDelayMs": 18112
+    },
+    "TX-1779985549787": {
+      "target": "98765",
+      "amount": "100",
+      "status": "ERROR_TIMEOUT",
+      "simulationProfile": "RANDOM",
+      "createdAt": 1779985549787,
+      "processedAt": 1779985596994,
+      "responseTimeMs": 47207,
+      "workerBucket": "RANDOM_SLOW_TIMEOUT",
+      "effectiveDelayMs": 47200
+    },
+    "TX-1779986165468": {
+      "target": "434",
+      "amount": "534",
+      "status": "ERROR_TIMEOUT",
+      "simulationProfile": "RANDOM",
+      "createdAt": 1779986165468,
+      "processedAt": 1779986208498,
+      "responseTimeMs": 43030,
+      "workerBucket": "RANDOM_SLOW_TIMEOUT",
+      "effectiveDelayMs": 42972
+    },
+    "TX-1779986220564": {
+      "target": "434",
+      "amount": "534",
+      "status": "APROBADO",
+      "simulationProfile": "RANDOM",
+      "createdAt": 1779986220564,
+      "processedAt": 1779986228032,
+      "responseTimeMs": 7468,
+      "workerBucket": "RANDOM_FAST",
+      "effectiveDelayMs": 7445
+    },
+    "TX-1779986274649": {
+      "target": "98765",
+      "amount": "100",
+      "status": "APROBADO",
+      "simulationProfile": "RANDOM",
+      "createdAt": 1779986274649,
+      "processedAt": 1779986288855,
+      "responseTimeMs": 14206,
+      "workerBucket": "RANDOM_FAST",
+      "effectiveDelayMs": 14196
     }
   }
 }

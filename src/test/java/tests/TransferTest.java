@@ -28,7 +28,7 @@ public class TransferTest extends BaseTest {
      
     // 3. Capturamos el texto para la validación final
     String statusFinal = page.getStatusMessage();
-    //System.out.println("EL MENSAJE FINAL OBTENIDO ES: " + statusFinal);
+    System.out.println("EL MENSAJE FINAL OBTENIDO ES: " + statusFinal);
     
     // 4. Verificamos que sea igual
     Assertions.assertEquals( statusFinal, mensajeEsperado, "El mensaje final no coincide");

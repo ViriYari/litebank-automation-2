@@ -25,41 +25,64 @@ jobs:
       - name: Docker ps
         run: docker ps
 
+      # =========================
+      # KAFKA READY CHECK (ESTABLE)
+      # =========================
       - name: Wait Kafka
         run: |
           echo "Esperando Kafka..."
           for i in {1..60}; do
-            docker exec qa-kafka-broker bash -c "echo > /dev/tcp/localhost/9092" && echo "Kafka OK" && exit 0
+            docker exec qa-kafka-broker bash -c \
+            "echo > /dev/tcp/localhost/9092" \
+            && echo "Kafka OK" && exit 0
             sleep 2
           done
-          echo "Kafka NO disponible"
           docker logs qa-kafka-broker || true
           exit 1
 
+      # =========================
+      # BACKEND READY CHECK (REAL)
+      # =========================
       - name: Wait backend-server
         run: |
           echo "Esperando backend..."
           for i in {1..60}; do
-            curl -s http://localhost:8080/actuator/health && echo "OK backend" && exit 0
+            STATUS=$(curl -s http://localhost:8080/actuator/health | grep -o '"status":"UP"')
+            if [ "$STATUS" == '"status":"UP"' ]; then
+              echo "Backend OK"
+              exit 0
+            fi
             sleep 2
           done
           docker logs qa-backend-server || true
           exit 1
 
+      # =========================
+      # FRONTEND READY CHECK (REAL)
+      # =========================
       - name: Wait frontend
         run: |
           echo "Esperando frontend..."
           for i in {1..60}; do
-            curl -s http://localhost:5173 | grep "<html" && echo "OK frontend" && exit 0
+            if curl -s http://localhost:5173 | grep -q "id=\"root\""; then
+              echo "Frontend OK"
+              exit 0
+            fi
             sleep 2
           done
           docker logs qa-frontend || true
           exit 1
 
+      # =========================
+      # WORKER LOGS
+      # =========================
       - name: Worker logs
         if: always()
         run: docker logs qa-backend-worker || true
 
+      # =========================
+      # SELENIUM TESTS (JAVA)
+      # =========================
       - name: Run Selenium tests
         run: mvn clean test
         env:
@@ -67,6 +90,9 @@ jobs:
           BACKEND_URL: http://localhost:8080
           KAFKA_BROKER: kafka:9092
 
+      # =========================
+      # CLEANUP
+      # =========================
       - name: Stop Docker
         if: always()
         run: docker compose down -v
