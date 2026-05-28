@@ -112,7 +112,7 @@ services:
     environment:
       - CHOKIDAR_USEPOLLING=true
     depends_on:
-      - backend-server
+      - kafka
     networks:
       - qa-network
 
