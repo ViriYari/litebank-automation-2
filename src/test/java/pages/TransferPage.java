@@ -55,7 +55,7 @@ public class TransferPage {
 
     WebElement element = driver.findElement(processingMsg);
 
-    System.out.println("EL TEXTO REAL EN EL STATUS-BOX ES: " + element.getText());
+    //System.out.println("EL TEXTO REAL EN EL STATUS-BOX ES: " + element.getText());
     return element.getText();
 }
 /*public String getStatusMessage() {
