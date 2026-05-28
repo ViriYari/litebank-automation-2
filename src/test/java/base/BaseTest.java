@@ -17,10 +17,10 @@ public class BaseTest {
     void setUp() {
          ChromeOptions options = new ChromeOptions();
 
-    // Para GitHub Actions / Linux
-    /*options.addArguments("--headless=new");
+     //Para GitHub Actions / Linux
+    options.addArguments("--headless=new");
     options.addArguments("--no-sandbox");
-    options.addArguments("--disable-dev-shm-usage");*/
+    options.addArguments("--disable-dev-shm-usage");
 
     driver = new ChromeDriver(options);
 
