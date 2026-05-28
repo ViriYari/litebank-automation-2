@@ -1,6 +1,6 @@
-FROM eclipse-temurin:21-jdk
+FROM maven:3.9-eclipse-temurin-21
 
-# Instalar herramientas necesarias
+# Instalar dependencias del sistema (Chrome + utilities)
 RUN apt-get update && apt-get install -y \
     wget \
     curl \
@@ -9,19 +9,22 @@ RUN apt-get update && apt-get install -y \
     xvfb \
     chromium \
     chromium-driver \
+    fonts-liberation \
+    libnss3 \
+    libxss1 \
+    libappindicator3-1 \
+    libasound2 \
     && rm -rf /var/lib/apt/lists/*
 
+# Variables para Selenium/Chrome headless
+ENV CHROME_BIN=/usr/bin/chromium
+ENV DISPLAY=:99
+
+# Directorio de trabajo
 WORKDIR /tests
 
-# Copiar pom.xml primero para cache de dependencias
-COPY pom.xml .
-
-# Instalar dependencias Maven
-RUN apt-get update && apt-get install -y maven
-RUN mvn dependency:resolve
-
-# Copiar proyecto
+# Copiar proyecto completo
 COPY . .
 
-# Ejecutar pruebas
-CMD ["mvn", "test"]
+# Ejecutar tests por defecto
+CMD ["mvn", "clean", "test"]
