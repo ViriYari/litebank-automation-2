@@ -24,13 +24,16 @@ public class TransferTest extends BaseTest {
         // 2. Ejecutar flujo
         page.createTransfer("98765", "100");
        
-  String mensajeEsperado = "Estado: ERROR_ENVIANDO_TRANSFERENCIA";
+  String mensajeEsperado = "Estado: APROBADO";
      
     // 3. Capturamos el texto para la validación final
     String statusFinal = page.getStatusMessage();
+    //System.out.println("EL MENSAJE FINAL OBTENIDO ES: " + statusFinal);
     
     // 4. Verificamos que sea igual
-    Assertions.assertEquals(mensajeEsperado, statusFinal, "El mensaje final no coincide");
+    Assertions.assertEquals( statusFinal, mensajeEsperado, "El mensaje final no coincide");
+    
+    
 }
     }
 

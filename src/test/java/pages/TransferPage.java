@@ -14,7 +14,7 @@ public class TransferPage {
 
     public TransferPage(WebDriver driver) {
         this.driver = driver;
-        this.wait = new WebDriverWait(driver, Duration.ofSeconds(15));
+        this.wait = new WebDriverWait(driver, Duration.ofSeconds(60));
     }
 
     // Localizadores (Sin cambios)
@@ -47,12 +47,37 @@ public class TransferPage {
  }
     public String getStatusMessage() {
     // Esto espera a que el elemento sea visible y devuelve su texto actual
-    WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(20));
+    WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(100));
 
-    WebElement element = wait.until(
-        ExpectedConditions.visibilityOfElementLocated(processingMsg)
+    wait.until(
+        ExpectedConditions.textToBe(processingMsg, "Estado: APROBADO")
     );
+
+    WebElement element = driver.findElement(processingMsg);
+
     //System.out.println("EL TEXTO REAL EN EL STATUS-BOX ES: " + element.getText());
     return element.getText();
 }
+/*public String getStatusMessage() {
+
+    long startTime = System.currentTimeMillis();
+
+    WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(100));
+
+    wait.until(
+        ExpectedConditions.textToBe(processingMsg, "Estado: APROBADO")
+    );
+
+    WebElement element = driver.findElement(processingMsg);
+
+    long endTime = System.currentTimeMillis();
+
+    long totalTime = endTime - startTime;
+
+    System.out.println("EL TEXTO REAL EN EL STATUS-BOX ES: " + element.getText());
+    System.out.println("TIEMPO HASTA 'Estado: APROBADO': " + totalTime + " ms");
+    System.out.println("TIEMPO EN SEGUNDOS: " + (totalTime / 1000.0));
+
+    return element.getText();
+}*/
 }

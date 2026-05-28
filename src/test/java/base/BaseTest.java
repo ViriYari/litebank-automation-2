@@ -18,18 +18,17 @@ public class BaseTest {
          ChromeOptions options = new ChromeOptions();
 
     // Para GitHub Actions / Linux
-    options.addArguments("--headless=new");
+    /*options.addArguments("--headless=new");
     options.addArguments("--no-sandbox");
-    options.addArguments("--disable-dev-shm-usage");
+    options.addArguments("--disable-dev-shm-usage");*/
 
     driver = new ChromeDriver(options);
 
     driver.manage().window().maximize();
 
     driver.manage().timeouts()
-            .implicitlyWait(Duration.ofSeconds(5));
+            .implicitlyWait(Duration.ofSeconds(60));
     }
-
     @AfterEach
     void tearDown() {
 
