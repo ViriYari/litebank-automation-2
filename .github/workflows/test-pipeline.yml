@@ -70,7 +70,9 @@ jobs:
           echo "Esperando frontend..."
 
           for i in {1..60}; do
-            if curl -s -o /dev/null -w "%{http_code}" http://localhost:5173 | grep -q "200"; then
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:5173)
+
+            if [ "$STATUS" = "200" ]; then
               echo "Frontend OK"
               exit 0
             fi
