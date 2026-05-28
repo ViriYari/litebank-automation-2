@@ -35,6 +35,7 @@ jobs:
             docker exec qa-kafka-broker bash -c "echo > /dev/tcp/localhost/9092" && \
             echo "Kafka OK" && exit 0
 
+            echo "Intento $i - Kafka no listo"
             sleep 2
           done
           docker logs qa-kafka-broker || true
@@ -48,7 +49,7 @@ jobs:
           echo "Esperando backend..."
 
           for i in {1..60}; do
-            if curl -s http://localhost:8081/actuator/health | grep -q '"status":"UP"'; then
+            if curl -s http://localhost:8080/health | grep -q "UP"; then
               echo "Backend OK"
               exit 0
             fi
@@ -69,11 +70,12 @@ jobs:
           echo "Esperando frontend..."
 
           for i in {1..60}; do
-            if curl -s http://localhost:5173 | grep -q 'id="root"'; then
+            if curl -s -o /dev/null -w "%{http_code}" http://localhost:5173 | grep -q "200"; then
               echo "Frontend OK"
               exit 0
             fi
 
+            echo "Intento $i - frontend no listo"
             sleep 2
           done
 
@@ -94,7 +96,7 @@ jobs:
         run: mvn clean test
         env:
           BASE_URL: http://localhost:5173
-          BACKEND_URL: http://localhost:8081
+          BACKEND_URL: http://localhost:8080
           KAFKA_BROKER: kafka:29092
 
       # =========================
