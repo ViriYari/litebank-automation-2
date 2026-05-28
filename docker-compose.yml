@@ -1,3 +1,5 @@
+name: qa-system
+
 services:
   kafka:
     image: apache/kafka:3.8.0
@@ -16,10 +18,17 @@ services:
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
 
-      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+
     networks:
       - qa-network
+
+    healthcheck:
+      test: ["CMD", "bash", "-c", "echo > /dev/tcp/localhost/9092"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
 
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
@@ -38,13 +47,10 @@ services:
     image: apache/kafka:3.8.0
     container_name: qa-kafka-init
     depends_on:
-      - kafka
+      kafka:
+        condition: service_healthy
     command: >
       sh -c "
-      echo 'Esperando Kafka...';
-      until /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --list >/dev/null 2>&1;
-      do sleep 2; done;
-
       /opt/kafka/bin/kafka-topics.sh
       --bootstrap-server kafka:9092
       --create
@@ -52,11 +58,8 @@ services:
       --topic transferencias-creadas
       --partitions 1
       --replication-factor 1;
-
-      echo 'Topic listo';
       tail -f /dev/null
       "
-    restart: "no"
     networks:
       - qa-network
 
@@ -69,10 +72,11 @@ services:
     command: npm run start-server
     ports:
       - "8080:8080"
-    depends_on:
-      - kafka
     environment:
       KAFKA_BROKER: kafka:9092
+    depends_on:
+      kafka:
+        condition: service_healthy
     networks:
       - qa-network
 
@@ -83,10 +87,11 @@ services:
     volumes:
       - ./backend:/app
     command: npm run start-worker
-    depends_on:
-      - kafka
     environment:
       KAFKA_BROKER: kafka:9092
+    depends_on:
+      kafka:
+        condition: service_healthy
     networks:
       - qa-network
 

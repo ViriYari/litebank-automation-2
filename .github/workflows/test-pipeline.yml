@@ -10,50 +10,63 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Clonar repo
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      # 2. Setup Java (para Selenium tests)
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 21
 
-      # 3. Levantar todo el sistema
       - name: Start Docker Compose
         run: docker compose up -d --build
 
-      # 4. Ver contenedores (debug)
       - name: Docker ps
         run: docker ps
 
-      # 5. Esperar backend-server (CRÍTICO)
+      - name: Wait Kafka
+        run: |
+          echo "Esperando Kafka..."
+          for i in {1..60}; do
+            docker exec qa-kafka-broker bash -c "echo > /dev/tcp/localhost/9092" && echo "Kafka OK" && exit 0
+            sleep 2
+          done
+          echo "Kafka NO disponible"
+          docker logs qa-kafka-broker || true
+          exit 1
+
       - name: Wait backend-server
         run: |
-          echo "Esperando backend-server..."
+          echo "Esperando backend..."
           for i in {1..60}; do
             curl -s http://localhost:8080/actuator/health && echo "OK backend" && exit 0
             sleep 2
           done
-          echo "Backend-server NO disponible"
           docker logs qa-backend-server || true
           exit 1
 
-      # 6. (Opcional) logs worker
+      - name: Wait frontend
+        run: |
+          echo "Esperando frontend..."
+          for i in {1..60}; do
+            curl -s http://localhost:5173 | grep "<html" && echo "OK frontend" && exit 0
+            sleep 2
+          done
+          docker logs qa-frontend || true
+          exit 1
+
       - name: Worker logs
         if: always()
         run: docker logs qa-backend-worker || true
 
-      # 7. Ejecutar tests Selenium
-      - name: Run tests
+      - name: Run Selenium tests
         run: mvn clean test
         env:
           BASE_URL: http://localhost:5173
           BACKEND_URL: http://localhost:8080
+          KAFKA_BROKER: kafka:9092
 
-      # 8. Apagar todo siempre
       - name: Stop Docker
         if: always()
         run: docker compose down -v
