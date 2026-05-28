@@ -10,24 +10,27 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 1. Clonar repo
       - name: Checkout repo
         uses: actions/checkout@v4
 
+      # 2. Setup Java (para Selenium tests)
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 21
 
-      # 1. Levantar todo
-      - name: Start Docker
+      # 3. Levantar todo el sistema
+      - name: Start Docker Compose
         run: docker compose up -d --build
 
-      - name: Ver contenedores
+      # 4. Ver contenedores (debug)
+      - name: Docker ps
         run: docker ps
 
-      # 2. Esperar BACKEND SERVER (IMPORTANTE)
-      - name: Wait backend server
+      # 5. Esperar backend-server (CRÍTICO)
+      - name: Wait backend-server
         run: |
           echo "Esperando backend-server..."
           for i in {1..60}; do
@@ -38,19 +41,19 @@ jobs:
           docker logs qa-backend-server || true
           exit 1
 
-      # 3. (OPCIONAL) verificar worker
-      - name: Check worker logs
+      # 6. (Opcional) logs worker
+      - name: Worker logs
         if: always()
         run: docker logs qa-backend-worker || true
 
-      # 4. Ejecutar tests
+      # 7. Ejecutar tests Selenium
       - name: Run tests
         run: mvn clean test
         env:
           BASE_URL: http://localhost:5173
           BACKEND_URL: http://localhost:8080
 
-      # 5. Cleanup
+      # 8. Apagar todo siempre
       - name: Stop Docker
         if: always()
         run: docker compose down -v
