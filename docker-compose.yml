@@ -27,7 +27,7 @@ services:
     ports:
       - "8081:8080"
     environment:
-      KAFKA_CLUSTERS_0_NAME: Local-QA-Cluster
+      KAFKA_CLUSTERS_0_NAME: local-qa
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
     depends_on:
       - kafka
@@ -36,7 +36,7 @@ services:
 
   kafka-init-topic:
     image: apache/kafka:3.8.0
-    container_name: qa-kafka-init-topic
+    container_name: qa-kafka-init
     depends_on:
       - kafka
     command: >
@@ -60,19 +60,33 @@ services:
     networks:
       - qa-network
 
-  backend:
-    image: eclipse-temurin:21
-    container_name: qa-backend
+  backend-server:
+    image: node:22
+    container_name: qa-backend-server
     working_dir: /app
     volumes:
       - ./backend:/app
-    command: mvn spring-boot:run
+    command: npm run start-server
     ports:
       - "8080:8080"
     depends_on:
       - kafka
     environment:
-      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      KAFKA_BROKER: kafka:29092
+    networks:
+      - qa-network
+
+  backend-worker:
+    image: node:22
+    container_name: qa-backend-worker
+    working_dir: /app
+    volumes:
+      - ./backend:/app
+    command: npm run start-worker
+    depends_on:
+      - kafka
+    environment:
+      KAFKA_BROKER: kafka:29092
     networks:
       - qa-network
 
@@ -87,7 +101,7 @@ services:
     ports:
       - "5173:5173"
     depends_on:
-      - kafka
+      - backend-server
     networks:
       - qa-network
 
