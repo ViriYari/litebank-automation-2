@@ -10,57 +10,47 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Clonar repo
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      # 2. Configurar Java
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 21
 
-      # 3. Levantar servicios (backend + frontend + kafka + db si aplica)
-      - name: Levantar servicios
+      # 1. Levantar todo
+      - name: Start Docker
         run: docker compose up -d --build
 
-      # 4. Ver contenedores (debug)
       - name: Ver contenedores
         run: docker ps
 
-      # 5. Esperar backend listo
-      - name: Esperar backend
+      # 2. Esperar BACKEND SERVER (IMPORTANTE)
+      - name: Wait backend server
         run: |
-          echo "Esperando backend..."
+          echo "Esperando backend-server..."
           for i in {1..60}; do
             curl -s http://localhost:8080/actuator/health && echo "OK backend" && exit 0
             sleep 2
           done
-          echo "Backend NO disponible"
-          docker logs qa-backend || true
+          echo "Backend-server NO disponible"
+          docker logs qa-backend-server || true
           exit 1
 
-      # 6. Esperar frontend listo
-      - name: Esperar frontend
-        run: |
-          echo "Esperando frontend..."
-          for i in {1..60}; do
-            curl -s http://localhost:5173 && echo "OK frontend" && exit 0
-            sleep 2
-          done
-          echo "Frontend NO disponible"
-          docker logs qa-frontend || true
-          exit 1
+      # 3. (OPCIONAL) verificar worker
+      - name: Check worker logs
+        if: always()
+        run: docker logs qa-backend-worker || true
 
-      # 7. Ejecutar tests
-      - name: Ejecutar tests
-        run: mvn test
+      # 4. Ejecutar tests
+      - name: Run tests
+        run: mvn clean test
         env:
           BASE_URL: http://localhost:5173
           BACKEND_URL: http://localhost:8080
 
-      # 8. Apagar servicios siempre
-      - name: Apagar Docker
+      # 5. Cleanup
+      - name: Stop Docker
         if: always()
         run: docker compose down -v
