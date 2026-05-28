@@ -1427,6 +1427,61 @@
       "responseTimeMs": 6374,
       "workerBucket": "RANDOM_FAST",
       "effectiveDelayMs": 6359
+    },
+    "TX-1779942468959": {
+      "target": "43",
+      "amount": "34",
+      "status": "ERROR_TIMEOUT",
+      "simulationProfile": "RANDOM",
+      "createdAt": 1779942468959,
+      "processedAt": 1779942528977,
+      "responseTimeMs": 60018,
+      "workerBucket": "RANDOM_SLOW_TIMEOUT",
+      "effectiveDelayMs": 59934
+    },
+    "TX-1779942531682": {
+      "target": "43",
+      "amount": "34",
+      "status": "APROBADO",
+      "simulationProfile": "RANDOM",
+      "createdAt": 1779942531682,
+      "processedAt": 1779942543375,
+      "responseTimeMs": 11693,
+      "workerBucket": "RANDOM_FAST",
+      "effectiveDelayMs": 11674
+    },
+    "TX-1779942556380": {
+      "target": "43",
+      "amount": "34",
+      "status": "APROBADO",
+      "simulationProfile": "RANDOM",
+      "createdAt": 1779942556380,
+      "processedAt": 1779942563566,
+      "responseTimeMs": 7186,
+      "workerBucket": "RANDOM_FAST",
+      "effectiveDelayMs": 7178
+    },
+    "TX-1779942577053": {
+      "target": "43",
+      "amount": "34",
+      "status": "APROBADO",
+      "simulationProfile": "RANDOM",
+      "createdAt": 1779942577053,
+      "processedAt": 1779942588244,
+      "responseTimeMs": 11191,
+      "workerBucket": "RANDOM_FAST",
+      "effectiveDelayMs": 11174
+    },
+    "TX-1779943549672": {
+      "target": "98765",
+      "amount": "100",
+      "status": "APROBADO",
+      "simulationProfile": "RANDOM",
+      "createdAt": 1779943549672,
+      "processedAt": 1779943561227,
+      "responseTimeMs": 11555,
+      "workerBucket": "RANDOM_FAST",
+      "effectiveDelayMs": 11515
     }
   }
 }

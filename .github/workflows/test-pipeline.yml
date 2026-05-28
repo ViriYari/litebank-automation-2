@@ -21,7 +21,7 @@ jobs:
           distribution: temurin
           java-version: 21
 
-      # 3. Levantar Docker (Kafka + frontend + todo)
+      # 3. Levantar servicios (backend + frontend + kafka + db si aplica)
       - name: Levantar servicios
         run: docker compose up -d --build
 
@@ -29,7 +29,19 @@ jobs:
       - name: Ver contenedores
         run: docker ps
 
-      # 5. Esperar frontend listo (CRÍTICO)
+      # 5. Esperar backend listo
+      - name: Esperar backend
+        run: |
+          echo "Esperando backend..."
+          for i in {1..60}; do
+            curl -s http://localhost:8080/actuator/health && echo "OK backend" && exit 0
+            sleep 2
+          done
+          echo "Backend NO disponible"
+          docker logs qa-backend || true
+          exit 1
+
+      # 6. Esperar frontend listo
       - name: Esperar frontend
         run: |
           echo "Esperando frontend..."
@@ -41,15 +53,14 @@ jobs:
           docker logs qa-frontend || true
           exit 1
 
-      # 6. Ejecutar tests con variable base URL
+      # 7. Ejecutar tests
       - name: Ejecutar tests
         run: mvn test
         env:
           BASE_URL: http://localhost:5173
-    
-          # 7. Apagar servicios siempre
+          BACKEND_URL: http://localhost:8080
+
+      # 8. Apagar servicios siempre
       - name: Apagar Docker
         if: always()
-        run: docker compose down
-
-     
+        run: docker compose down -v
