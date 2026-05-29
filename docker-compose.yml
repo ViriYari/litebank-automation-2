@@ -12,10 +12,12 @@ services:
       KAFKA_PROCESS_ROLES: broker,controller
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
 
-      KAFKA_LISTENERS: EXTERNAL://:9092,INTERNAL://:29092,CONTROLLER://:9093
-      KAFKA_ADVERTISED_LISTENERS: EXTERNAL://localhost:9092,INTERNAL://kafka:29092
+      KAFKA_LISTENERS: CONTROLLER://:9093,INTERNAL://:29092,EXTERNAL://:9092
 
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,EXTERNAL:PLAINTEXT,INTERNAL:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:29092,EXTERNAL://localhost:9092
+
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
 
@@ -65,23 +67,21 @@ services:
 
     command: >
       /bin/sh -c "
-      set -e;
-
       echo 'Esperando Kafka...';
 
-      until /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:29092 --list >/dev/null 2>&1; do
+      until /opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server kafka:29092 >/dev/null 2>&1; do
         sleep 2;
       done;
 
       echo 'Creando topic...';
 
-      /opt/kafka/bin/kafka-topics.sh
-      --bootstrap-server kafka:29092
-      --create
-      --if-not-exists
-      --topic transferencias-creadas
-      --partitions 1
-      --replication-factor 1;
+      /opt/kafka/bin/kafka-topics.sh \
+        --bootstrap-server kafka:29092 \
+        --create \
+        --if-not-exists \
+        --topic transferencias-creadas \
+        --partitions 1 \
+        --replication-factor 1;
 
       echo 'Topic listo';
       "
@@ -130,12 +130,15 @@ services:
 
     command: >
       sh -c "
-      until /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:29092 --describe --topic transferencias-creadas >/dev/null 2>&1; do
-        echo 'Esperando topic...';
+      echo 'Esperando Kafka broker...';
+
+      until nc -z kafka 29092; do
+        echo 'Kafka no listo...';
         sleep 2;
       done;
 
-      npm run start-worker
+      echo 'Kafka disponible. Iniciando worker...';
+      npm run start-worker;
       "
 
     environment:
