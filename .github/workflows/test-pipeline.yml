@@ -1,3 +1,5 @@
+# .github/workflows/selenium-tests.yml
+
 name: Selenium Async Tests
 
 on:
@@ -9,16 +11,27 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
+    timeout-minutes: 20
+
     steps:
+      # =========================
+      # CHECKOUT
+      # =========================
       - name: Checkout repo
         uses: actions/checkout@v4
 
+      # =========================
+      # JAVA
+      # =========================
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 21
 
+      # =========================
+      # START DOCKER
+      # =========================
       - name: Start Docker Compose
         run: docker compose up -d --build
 
@@ -26,11 +39,12 @@ jobs:
         run: docker ps
 
       # =========================
-      # KAFKA READY CHECK
+      # WAIT KAFKA
       # =========================
       - name: Wait Kafka
         run: |
           echo "Esperando Kafka..."
+
           for i in {1..60}; do
             docker exec qa-kafka-broker bash -c "echo > /dev/tcp/localhost/9092" && \
             echo "Kafka OK" && exit 0
@@ -38,38 +52,47 @@ jobs:
             echo "Intento $i - Kafka no listo"
             sleep 2
           done
+
+          echo "Kafka no levantó"
+
           docker logs qa-kafka-broker || true
+
           exit 1
 
       # =========================
-      # BACKEND READY CHECK
+      # WAIT BACKEND
       # =========================
       - name: Wait backend-server
         run: |
           echo "Esperando backend..."
 
           for i in {1..60}; do
+
             if curl -s http://localhost:8080/health | grep -q "UP"; then
               echo "Backend OK"
               exit 0
             fi
 
             echo "Intento $i - backend no listo"
+
             sleep 2
           done
 
           echo "Backend no respondió"
+
           docker logs qa-backend-server || true
+
           exit 1
 
       # =========================
-      # FRONTEND READY CHECK
+      # WAIT FRONTEND
       # =========================
       - name: Wait frontend
         run: |
           echo "Esperando frontend..."
 
           for i in {1..60}; do
+
             STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:5173)
 
             if [ "$STATUS" = "200" ]; then
@@ -78,28 +101,51 @@ jobs:
             fi
 
             echo "Intento $i - frontend no listo"
+
             sleep 2
           done
 
+          echo "Frontend no respondió"
+
           docker logs qa-frontend || true
+
           exit 1
 
       # =========================
-      # WORKER LOGS
+      # WAIT WORKER
       # =========================
-      - name: Worker logs
-        if: always()
-        run: docker logs qa-backend-worker || true
+      - name: Wait worker startup
+        run: |
+          echo "Esperando worker..."
+          sleep 15
 
       # =========================
-      # SELENIUM TESTS
+      # RUN TESTS
       # =========================
       - name: Run Selenium tests
         run: mvn clean test
         env:
           BASE_URL: http://localhost:5173
           BACKEND_URL: http://localhost:8080
-          KAFKA_BROKER: kafka:29092
+
+      # =========================
+      # DEBUG LOGS
+      # =========================
+      - name: Backend server logs
+        if: always()
+        run: docker logs qa-backend-server || true
+
+      - name: Backend worker logs
+        if: always()
+        run: docker logs qa-backend-worker || true
+
+      - name: Kafka logs
+        if: always()
+        run: docker logs qa-kafka-broker || true
+
+      - name: Frontend logs
+        if: always()
+        run: docker logs qa-frontend || true
 
       # =========================
       # CLEANUP
