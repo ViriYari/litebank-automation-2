@@ -1,4 +1,14 @@
 -------------------------------------------------------------------------------
 Test set: tests.TransferTest
 -------------------------------------------------------------------------------
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 21.793 s - in tests.TransferTest
+Tests run: 1, Failures: 0, Errors: 1, Skipped: 0, Time elapsed: 107.779 s <<< FAILURE! - in tests.TransferTest
+e2e_transfer_test  Time elapsed: 107.758 s  <<< ERROR!
+org.openqa.selenium.TimeoutException: 
+Expected condition failed: waiting for element found by By.id: status-box to have text "Estado: APROBADO". Current text: "Estado: ERROR_ENVIANDO_TRANSFERENCIA" (tried for 100 second(s) with 500 milliseconds interval)
+Build info: version: '4.30.0', revision: '509c7f17cc*'
+System info: os.name: 'Windows 11', os.arch: 'amd64', os.version: '10.0', java.version: '21.0.11'
+Driver info: org.openqa.selenium.chrome.ChromeDriver
+Capabilities {acceptInsecureCerts: false, browserName: chrome, browserVersion: 148.0.7778.179, chrome: {chromedriverVersion: 148.0.7778.178 (d096af1c9e9..., userDataDir: C:\Users\vyrte\AppData\Loca...}, fedcm:accounts: true, goog:chromeOptions: {debuggerAddress: localhost:58850}, goog:processID: 28644, networkConnectionEnabled: false, pageLoadStrategy: normal, platformName: windows, proxy: Proxy(), se:cdp: ws://localhost:58850/devtoo..., se:cdpVersion: 148.0.7778.179, setWindowRect: true, strictFileInteractability: false, timeouts: {implicit: 0, pageLoad: 300000, script: 30000}, unhandledPromptBehavior: dismiss and notify, webauthn:extension:credBlob: true, webauthn:extension:largeBlob: true, webauthn:extension:minPinLength: true, webauthn:extension:prf: true, webauthn:virtualAuthenticators: true}
+Session ID: fdd210587eb2474e1443ffe168646c64
+	at tests.TransferTest.e2e_transfer_test(TransferTest.java:30)
+

@@ -4,11 +4,18 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
+
+concurrency:
+  group: test-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
 
     steps:
 
@@ -26,6 +33,7 @@ jobs:
         with:
           distribution: temurin
           java-version: 21
+          cache: maven
 
       # =========================
       # START DOCKER
@@ -39,26 +47,20 @@ jobs:
       # =========================
       # WAIT KAFKA (REAL HEALTH CHECK)
       # =========================
-      - name: Wait Kafka
+      - name: Wait for Kafka broker
         run: |
           echo "Esperando Kafka..."
-
           for i in {1..60}; do
-
-            docker exec qa-kafka-broker \
+            if docker exec qa-kafka-broker \
               /opt/kafka/bin/kafka-broker-api-versions.sh \
-              --bootstrap-server localhost:9092 > /dev/null 2>&1
-
-            if [ $? -eq 0 ]; then
-              echo "Kafka OK"
+              --bootstrap-server localhost:9092 > /dev/null 2>&1; then
+              echo "✓ Kafka OK"
               exit 0
             fi
-
-            echo "Intento $i - Kafka no listo"
+            echo "  Intento $i - Kafka no listo"
             sleep 2
           done
-
-          echo "Kafka no levantó"
+          echo "✗ Kafka no levantó"
           docker logs qa-kafka-broker || true
           exit 1
 
@@ -68,7 +70,6 @@ jobs:
       - name: Create Kafka topic
         run: |
           echo "Creando topic transferencias-creadas..."
-
           docker exec qa-kafka-broker \
             /opt/kafka/bin/kafka-topics.sh \
             --bootstrap-server localhost:9092 \
@@ -77,70 +78,59 @@ jobs:
             --topic transferencias-creadas \
             --partitions 1 \
             --replication-factor 1
-
-          echo "Topic creado"
+          echo "✓ Topic creado"
 
       # =========================
       # WAIT BACKEND
       # =========================
-      - name: Wait backend-server
+      - name: Wait for backend-server
         run: |
-          echo "Esperando backend..."
-
+          echo "Esperando backend-server..."
           for i in {1..60}; do
-            if curl -fsS http://localhost:8080/health > /dev/null; then
-              echo "Backend OK"
+            if curl -fsS http://localhost:8080/health > /dev/null 2>&1; then
+              echo "✓ Backend server OK"
               exit 0
             fi
-
-            echo "Intento $i - backend no listo"
+            echo "  Intento $i - backend no listo"
             sleep 2
           done
-
-          echo "Backend no respondió"
+          echo "✗ Backend no respondió"
           docker logs qa-backend-server || true
           exit 1
 
       # =========================
       # WAIT FRONTEND
       # =========================
-      - name: Wait frontend
+      - name: Wait for frontend
         run: |
           echo "Esperando frontend..."
-
           for i in {1..60}; do
-            if curl -fsS http://localhost:5173 > /dev/null; then
-              echo "Frontend OK"
+            if curl -fsS http://localhost:5173 > /dev/null 2>&1; then
+              echo "✓ Frontend OK"
               exit 0
             fi
-
-            echo "Intento $i - frontend no listo"
+            echo "  Intento $i - frontend no listo"
             sleep 2
           done
-
-          echo "Frontend NO disponible"
+          echo "✗ Frontend NO disponible"
           docker logs qa-frontend || true
           exit 1
 
       # =========================
       # WAIT WORKER (ROBUST)
       # =========================
-      - name: Wait worker startup
+      - name: Wait for backend-worker
         run: |
-          echo "Esperando worker..."
-
+          echo "Esperando backend-worker..."
           for i in {1..30}; do
-
-            if docker inspect -f '{{.State.Running}}' qa-backend-worker | grep -q true; then
-              echo "Worker running"
+            if docker inspect -f '{{.State.Running}}' qa-backend-worker 2>/dev/null | grep -q true; then
+              echo "✓ Worker running"
               exit 0
             fi
-
-            echo "Intento $i - worker no listo"
+            echo "  Intento $i - worker no listo"
             sleep 2
           done
-
-          echo "Worker no inició correctamente"
+          echo "✗ Worker no inició correctamente"
           docker logs qa-backend-worker || true
           exit 1
 
@@ -148,33 +138,38 @@ jobs:
       # RUN TESTS
       # =========================
       - name: Run Selenium tests
-        run: mvn clean test
+        run: mvn clean test -X
         env:
           BASE_URL: http://localhost:5173
           BACKEND_URL: http://localhost:8080
 
       # =========================
-      # DEBUG LOGS
+      # DEBUG LOGS (on failure)
       # =========================
-      - name: Backend server logs
-        if: always()
-        run: docker logs qa-backend-server || true
-
-      - name: Backend worker logs
-        if: always()
-        run: docker logs qa-backend-worker || true
-
-      - name: Kafka logs
-        if: always()
-        run: docker logs qa-kafka-broker || true
-
-      - name: Frontend logs
-        if: always()
-        run: docker logs qa-frontend || true
+      - name: Collect logs on failure
+        if: failure()
+        run: |
+          echo "=== Backend Server Logs ==="
+          docker logs qa-backend-server || echo "No logs available"
+          echo ""
+          echo "=== Backend Worker Logs ==="
+          docker logs qa-backend-worker || echo "No logs available"
+          echo ""
+          echo "=== Kafka Logs ==="
+          docker logs qa-kafka-broker || echo "No logs available"
+          echo ""
+          echo "=== Frontend Logs ==="
+          docker logs qa-frontend || echo "No logs available"
+          echo ""
+          echo "=== Docker Compose Status ==="
+          docker compose ps
+          echo ""
+          echo "=== Network Status ==="
+          docker network inspect qa-network || echo "Network info unavailable"
 
       # =========================
       # CLEANUP
       # =========================
       - name: Stop Docker
         if: always()
-        run: docker compose down -v
+        run: docker compose down -v --remove-orphans

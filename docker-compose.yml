@@ -1,41 +1,36 @@
+version: '3.8'
+
 services:
 
   kafka:
     image: apache/kafka:3.8.0
     container_name: qa-kafka-broker
-
+    restart: on-failure
     ports:
       - "9092:9092"
-
+      - "29092:29092"
     environment:
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: broker,controller
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
-
       KAFKA_LISTENERS: CONTROLLER://:9093,INTERNAL://:29092,EXTERNAL://:9092
-
       KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:29092,EXTERNAL://localhost:9092
-
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
-
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
-
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
-
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
-
     networks:
       - qa-network
-
     healthcheck:
       test: ["CMD", "/opt/kafka/bin/kafka-broker-api-versions.sh", "--bootstrap-server", "localhost:9092"]
       interval: 10s
       timeout: 10s
       retries: 20
+      start_period: 15s
 
 
   kafka-ui:
@@ -95,26 +90,27 @@ services:
   backend-server:
     image: node:22
     container_name: qa-backend-server
-
+    restart: on-failure
     working_dir: /app
-
     volumes:
       - ./backend:/app
-
     command: sh -c "npm install && npm run start-server"
-
     ports:
       - "8080:3000"
-
     environment:
       KAFKA_BROKER: kafka:29092
-
+      NODE_ENV: production
     depends_on:
       kafka:
         condition: service_healthy
       kafka-init-topic:
         condition: service_completed_successfully
-
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
     networks:
       - qa-network
 
@@ -122,34 +118,30 @@ services:
   backend-worker:
     image: node:22
     container_name: qa-backend-worker
-
+    restart: on-failure
     working_dir: /app
-
     volumes:
       - ./backend:/app
-
     command: >
       sh -c "
       echo 'Esperando Kafka broker...';
-
       until nc -z kafka 29092; do
         echo 'Kafka no listo...';
         sleep 2;
       done;
-
       echo 'Kafka disponible. Iniciando worker...';
       npm run start-worker;
       "
-
     environment:
       KAFKA_BROKER: kafka:29092
-
+      NODE_ENV: production
     depends_on:
       kafka:
         condition: service_healthy
       kafka-init-topic:
         condition: service_completed_successfully
-
+      backend-server:
+        condition: service_healthy
     networks:
       - qa-network
 
@@ -157,25 +149,28 @@ services:
   frontend:
     image: node:22
     container_name: qa-frontend
-
+    restart: on-failure
     working_dir: /app
-
     volumes:
       - ./frontend:/app
       - /app/node_modules
-
     command: sh -c "npm ci && npm run dev -- --host 0.0.0.0 --port 5173"
-
     ports:
       - "5173:5173"
-
     environment:
       CHOKIDAR_USEPOLLING: "true"
-
+      NODE_ENV: development
     depends_on:
       kafka:
         condition: service_healthy
-
+      backend-server:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5173"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 15s
     networks:
       - qa-network
 
