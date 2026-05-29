@@ -105,10 +105,14 @@ echo "5️⃣  Checking Backend Worker..."
 for i in {1..30}; do
     if docker inspect -f '{{.State.Running}}' qa-backend-worker 2>/dev/null | grep -q true; then
         echo "   ✓ Worker is running"
+        # Extra wait for worker to connect to Kafka
+        echo "   ⏳ Waiting for worker to connect to Kafka..."
+        sleep 3
+        echo "   ✓ Worker ready"
         break
     fi
     if [ $i -eq 30 ]; then
-        echo "   ⚠️  Worker not responding (may still be starting)"
+        echo "   ✗ Worker not responding (may still be starting)"
         break
     fi
     echo "   ⏳ Attempt $i/30 - Worker not ready yet..."

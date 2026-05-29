@@ -28,40 +28,80 @@ const kafka = new Kafka({
 });
 const producer = kafka.producer();
 let producerConnected = false;
+let connectionAttempts = 0;
 
-// Inicializar Productor
+// Inicializar Productor con reintentos
 async function initProducer() {
-  try {
-    await producer.connect();
-    producerConnected = true;
-    console.log(' Conectado exitosamente al Broker de Kafka en: ' + KAFKA_BROKER);
-  } catch (error) {
-    producerConnected = false;
-    console.error(' Fallo al conectar con Kafka:', error);
+  const maxRetries = 5;
+  
+  while (connectionAttempts < maxRetries) {
+    try {
+      connectionAttempts++;
+      console.log(`[SERVER] Conectando a Kafka (intento ${connectionAttempts}/${maxRetries})...`);
+      await producer.connect();
+      producerConnected = true;
+      console.log(`[SERVER] ✓ Conectado exitosamente al Broker de Kafka en: ${KAFKA_BROKER}`);
+      return;
+    } catch (error) {
+      producerConnected = false;
+      console.error(`[SERVER] ✗ Intento ${connectionAttempts} falló: ${error.message}`);
+      
+      if (connectionAttempts < maxRetries) {
+        const waitTime = Math.min(3000, 500 * connectionAttempts);
+        console.log(`[SERVER] Reintentando en ${waitTime}ms...`);
+        await new Promise(resolve => setTimeout(resolve, waitTime));
+      }
+    }
   }
+  
+  console.error(`[SERVER] ✗ No se pudo conectar a Kafka después de ${maxRetries} intentos`);
+  console.error(`[SERVER] El servidor continuará ejecutándose pero los envíos a Kafka fallarán`);
 }
+
+// Iniciar conexión en background
 initProducer();
 
 async function ensureProducerConnected() {
   if (producerConnected) {
     return;
   }
-  await producer.connect();
-  producerConnected = true;
-  console.log(' Productor reconectado a Kafka en: ' + KAFKA_BROKER);
+  
+  console.log(`[SERVER] Productor no conectado, intentando reconectar...`);
+  
+  try {
+    await producer.connect();
+    producerConnected = true;
+    console.log(`[SERVER] ✓ Productor reconectado a Kafka en: ${KAFKA_BROKER}`);
+  } catch (error) {
+    producerConnected = false;
+    console.error(`[SERVER] ✗ Fallo al reconectar productor: ${error.message}`);
+    throw error;
+  }
 }
 
 async function publishTransferMessage(messagePayload) {
   await ensureProducerConnected();
 
   try {
+    console.log(`[SERVER] Publicando mensaje a Kafka: ${messagePayload.messages[0].key}`);
     await producer.send(messagePayload);
+    console.log(`[SERVER] ✓ Mensaje publicado exitosamente: ${messagePayload.messages[0].key}`);
     return;
   } catch (firstError) {
+    console.error(`[SERVER] ✗ Error al publicar: ${firstError.message}`);
+    
     // Reintento único tras reconexión para mitigar cortes transitorios del broker.
+    console.log(`[SERVER] Intentando reconectar y reenviar...`);
     producerConnected = false;
-    await ensureProducerConnected();
-    await producer.send(messagePayload);
+    
+    try {
+      await ensureProducerConnected();
+      await producer.send(messagePayload);
+      console.log(`[SERVER] ✓ Mensaje reenviado exitosamente después de reconexión: ${messagePayload.messages[0].key}`);
+    } catch (retryError) {
+      console.error(`[SERVER] ✗ Falló reintento: ${retryError.message}`);
+      throw retryError;
+    }
   }
 }
 
@@ -84,6 +124,8 @@ app.post('/api/transfer', async (req, res) => {
   const transactionId = 'TX-' + Date.now();
   const createdAt = Date.now();
   const normalizedProfile = String(simulationProfile || 'RANDOM').toUpperCase();
+
+  console.log(`[SERVER] Recibida solicitud de transferencia: ${transactionId} | target=${target} | amount=${amount}`);
 
   // Guardar estado inicial en la base de datos (db.json)
   const db = JSON.parse(fs.readFileSync(DB_PATH));
@@ -119,12 +161,12 @@ app.post('/api/transfer', async (req, res) => {
 
   try {
     await publishTransferMessage(kafkaMessage);
-    console.log(` Publicado en 'transferencias-creadas': ${transactionId}`);
+    console.log(`[SERVER] ✓ Transferencia creada exitosamente: ${transactionId}`);
   } catch (error) {
     db.transactions[transactionId].status = 'ERROR_PUBLICACION';
     db.transactions[transactionId].publicationError = String(error?.message || error);
     fs.writeFileSync(DB_PATH, JSON.stringify(db, null, 2));
-    console.error(' Fallo al publicar mensaje:', error);
+    console.error(`[SERVER] ✗ Fallo al crear transferencia ${transactionId}: ${error?.message || error}`);
     return res.status(503).json({
       id: transactionId,
       status: 'ERROR_PUBLICACION',

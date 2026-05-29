@@ -78,61 +78,97 @@ async function subscribeWhenTopicAvailable() {
 }
 
 async function runWorker() {
-  await consumer.connect();
-  // El consumidor se suscribe al casillero específico de transferencias creadas
-  await subscribeWhenTopicAvailable();
-  console.log(" Escuchando eventos en el tópico 'transferencias-creadas'...");
+  let connectionAttempts = 0;
+  const maxRetries = 10;
 
-  await consumer.run({
-    eachMessage: async ({ topic, partition, message }) => {
-      const eventData = JSON.parse(message.value.toString());
-      const txId = message.key.toString();
+  while (connectionAttempts < maxRetries) {
+    try {
+      connectionAttempts++;
+      console.log(`[WORKER] Conectando a Kafka (intento ${connectionAttempts}/${maxRetries})...`);
+      
+      await consumer.connect();
+      console.log(`[WORKER] ✓ Conectado a Kafka en ${KAFKA_BROKER}`);
+      
+      // El consumidor se suscribe al casillero específico de transferencias creadas
+      await subscribeWhenTopicAvailable();
+      console.log(`[WORKER] ✓ Suscrito a tópico 'transferencias-creadas'`);
+      console.log(`[WORKER] ✓ Escuchando eventos...`);
 
-      // Registro Estructurado (Structured Logging)
-      console.log(JSON.stringify({
-        timestamp: new Date().toISOString(),
-        level: "INFO",
-        service: "bank-worker",
-        message: "Evento recibido de Kafka",
-        transactionId: txId,
-        data: eventData
-      }));
+      await consumer.run({
+        eachMessage: async ({ topic, partition, message }) => {
+          try {
+            const eventData = JSON.parse(message.value.toString());
+            const txId = message.key.toString();
 
-      // Simulación de procesamiento asíncrono complejo (Retraso configurable, 10s por defecto)
-      const simulation = resolveSimulation(eventData.simulationProfile);
-      const speedFactor = clampSpeedFactor(eventData.speedFactor);
-      const finalDelayMs = Math.max(200, Math.floor(simulation.delayMs * speedFactor));
+            // Registro Estructurado (Structured Logging)
+            console.log(JSON.stringify({
+              timestamp: new Date().toISOString(),
+              level: "INFO",
+              service: "bank-worker",
+              message: "Evento recibido de Kafka",
+              transactionId: txId,
+              data: eventData
+            }));
 
-      console.log(
-        ` Procesando ${txId} | profile=${eventData.simulationProfile || 'RANDOM'} | bucket=${simulation.bucket} | delay=${finalDelayMs}ms`
-      );
-      await delay(finalDelayMs);
+            // Simulación de procesamiento asíncrono complejo (Retraso configurable, 10s por defecto)
+            const simulation = resolveSimulation(eventData.simulationProfile);
+            const speedFactor = clampSpeedFactor(eventData.speedFactor);
+            const finalDelayMs = Math.max(200, Math.floor(simulation.delayMs * speedFactor));
 
-      // Actualizar resultado final en db.json
-      const db = JSON.parse(fs.readFileSync(DB_PATH));
-      if (db.transactions[txId]) {
-        const createdAt = Number(db.transactions[txId].createdAt || Date.now());
-        const processedAt = Date.now();
-        db.transactions[txId].status = simulation.finalStatus;
-        db.transactions[txId].workerBucket = simulation.bucket;
-        db.transactions[txId].processedAt = processedAt;
-        db.transactions[txId].responseTimeMs = processedAt - createdAt;
-        db.transactions[txId].effectiveDelayMs = finalDelayMs;
-        fs.writeFileSync(DB_PATH, JSON.stringify(db, null, 2));
-        
-        console.log(JSON.stringify({
-          timestamp: new Date().toISOString(),
-          level: "INFO",
-          service: "bank-worker",
-          message: "Transacción procesada",
-          transactionId: txId,
-          status: simulation.finalStatus,
-          bucket: simulation.bucket,
-          effectiveDelayMs: finalDelayMs
-        }));
+            console.log(
+              `[WORKER] Procesando ${txId} | profile=${eventData.simulationProfile || 'RANDOM'} | bucket=${simulation.bucket} | delay=${finalDelayMs}ms`
+            );
+            await delay(finalDelayMs);
+
+            // Actualizar resultado final en db.json
+            const db = JSON.parse(fs.readFileSync(DB_PATH));
+            if (db.transactions[txId]) {
+              const createdAt = Number(db.transactions[txId].createdAt || Date.now());
+              const processedAt = Date.now();
+              db.transactions[txId].status = simulation.finalStatus;
+              db.transactions[txId].workerBucket = simulation.bucket;
+              db.transactions[txId].processedAt = processedAt;
+              db.transactions[txId].responseTimeMs = processedAt - createdAt;
+              db.transactions[txId].effectiveDelayMs = finalDelayMs;
+              fs.writeFileSync(DB_PATH, JSON.stringify(db, null, 2));
+              
+              console.log(JSON.stringify({
+                timestamp: new Date().toISOString(),
+                level: "INFO",
+                service: "bank-worker",
+                message: "Transacción procesada",
+                transactionId: txId,
+                status: simulation.finalStatus,
+                bucket: simulation.bucket,
+                effectiveDelayMs: finalDelayMs
+              }));
+            }
+          } catch (error) {
+            console.error(`[WORKER] Error procesando mensaje:`, error);
+          }
+        }
+      });
+      
+      // Si llegamos aquí, consumer.run() se interrumpió (no debería pasar en condiciones normales)
+      console.log(`[WORKER] ⚠️  Consumer loop terminó inesperadamente`);
+      break;
+      
+    } catch (error) {
+      console.error(`[WORKER] ✗ Error en intento ${connectionAttempts}: ${error.message}`);
+      
+      if (connectionAttempts < maxRetries) {
+        const waitTime = Math.min(5000, 500 * connectionAttempts);
+        console.log(`[WORKER] Reintentando en ${waitTime}ms...`);
+        await delay(waitTime);
+      } else {
+        console.error(`[WORKER] ✗ No se pudo conectar después de ${maxRetries} intentos. Abortando.`);
+        process.exit(1);
       }
     }
-  });
+  }
 }
 
-runWorker().catch(console.error);
+runWorker().catch(error => {
+  console.error(`[WORKER] ✗ Error fatal:`, error);
+  process.exit(1);
+});

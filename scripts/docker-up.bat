@@ -103,14 +103,41 @@ for /L %%i in (1,1,30) do (
     docker inspect -f "{{.State.Running}}" qa-backend-worker 2>nul | findstr /r "true" >nul 2>&1
     if !errorlevel! equ 0 (
         echo    OK - Worker is running
-        goto :worker_ready
+        echo    Waiting for worker to connect to Kafka...
+        timeout /t 3 /nobreak >nul
+        echo    OK - Worker ready
+        goto :pre_test_check
     )
     if %%i lss 30 (
         echo    Attempt %%i/30 - Worker not ready yet...
         timeout /t 2 /nobreak >nul
     )
 )
-echo    WARNING - Worker not responding ^(may still be starting^)
+echo    WARNING - Worker not responding (may still be starting)
+
+:pre_test_check
+echo.
+echo 6. Pre-test validation...
+for /L %%i in (1,1,20) do (
+    curl -fsS -X POST http://localhost:8080/api/transfer ^
+      -H "Content-Type: application/json" ^
+      -d "{\"target\":\"TEST\",\"amount\":\"0.01\"}" >nul 2>&1
+    if !errorlevel! equ 0 (
+        echo    OK - Backend ready to accept transfers
+        timeout /t 2 /nobreak >nul
+        goto :worker_ready
+    )
+    if %%i lss 20 (
+        echo    Attempt %%i/20 - backend processing not ready
+        timeout /t 1 /nobreak >nul
+    )
+)
+echo    ERROR - Backend not accepting transfers
+docker logs qa-backend-server 2>nul | findstr "SERVER" >nul || (
+    echo    Last output from backend:
+    docker logs qa-backend-server 2>nul | more +20 || echo No logs
+)
+exit /b 1
 
 :worker_ready
 echo.

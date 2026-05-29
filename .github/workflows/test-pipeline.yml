@@ -125,13 +125,37 @@ jobs:
           for i in {1..30}; do
             if docker inspect -f '{{.State.Running}}' qa-backend-worker 2>/dev/null | grep -q true; then
               echo "✓ Worker running"
+              # Extra wait for worker to fully connect to Kafka
+              sleep 3
               exit 0
             fi
-            echo "  Intento $i - worker no listo"
+            echo "  Intento $i/30 - worker no listo"
             sleep 2
           done
           echo "✗ Worker no inició correctamente"
           docker logs qa-backend-worker || true
+          exit 1
+
+      # =========================
+      # PRE-TEST VALIDATION
+      # =========================
+      - name: Validate backend ready for tests
+        run: |
+          echo "Validando que backend esté listo para recibir transferencias..."
+          for i in {1..20}; do
+            if curl -fsS -X POST http://localhost:8080/api/transfer \
+              -H "Content-Type: application/json" \
+              -d '{"target":"TEST","amount":"0.01"}' > /dev/null 2>&1; then
+              echo "✓ Backend ready to accept transfers"
+              # Small delay to ensure worker is processing
+              sleep 2
+              exit 0
+            fi
+            echo "  Intento $i/20 - backend processing not ready"
+            sleep 1
+          done
+          echo "✗ Backend not accepting transfers"
+          docker logs qa-backend-server | tail -20 || true
           exit 1
 
       # =========================
