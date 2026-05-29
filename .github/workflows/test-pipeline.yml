@@ -1,5 +1,3 @@
-# .github/workflows/selenium-tests.yml
-
 name: Selenium Async Tests
 
 on:
@@ -39,24 +37,52 @@ jobs:
         run: docker ps
 
       # =========================
-      # WAIT KAFKA
+      # WAIT KAFKA (REAL READINESS)
       # =========================
       - name: Wait Kafka
         run: |
           echo "Esperando Kafka..."
 
           for i in {1..60}; do
-            docker exec qa-kafka-broker bash -c "echo > /dev/tcp/localhost/9092" && \
-            echo "Kafka OK" && exit 0
+
+            docker exec qa-kafka-broker \
+              /opt/kafka/bin/kafka-broker-api-versions.sh \
+              --bootstrap-server localhost:9092 > /dev/null 2>&1
+
+            if [ $? -eq 0 ]; then
+              echo "Kafka OK"
+              exit 0
+            fi
 
             echo "Intento $i - Kafka no listo"
             sleep 2
           done
 
           echo "Kafka no levantó"
-
           docker logs qa-kafka-broker || true
+          exit 1
 
+      # =========================
+      # WAIT TOPIC (CRÍTICO)
+      # =========================
+      - name: Wait Kafka topic
+        run: |
+          echo "Esperando topic transferencias-creadas..."
+
+          for i in {1..60}; do
+
+            docker exec qa-kafka-broker \
+              /opt/kafka/bin/kafka-topics.sh \
+              --bootstrap-server localhost:9092 \
+              --list | grep -q transferencias-creadas && \
+              echo "Topic OK" && exit 0
+
+            echo "Intento $i - topic no listo"
+            sleep 2
+          done
+
+          echo "Topic NO existe"
+          docker logs qa-kafka-broker || true
           exit 1
 
       # =========================
@@ -74,14 +100,11 @@ jobs:
             fi
 
             echo "Intento $i - backend no listo"
-
             sleep 2
           done
 
           echo "Backend no respondió"
-
           docker logs qa-backend-server || true
-
           exit 1
 
       # =========================
@@ -93,20 +116,38 @@ jobs:
 
           for i in {1..60}; do
 
-            curl -s http://localhost:5173 && echo "OK frontend" && exit 0
+            if curl -fsS http://localhost:5173 > /dev/null; then
+              echo "Frontend OK"
+              exit 0
+            fi
+
+            echo "Intento $i - frontend no listo"
             sleep 2
           done
+
           echo "Frontend NO disponible"
           docker logs qa-frontend || true
           exit 1
 
       # =========================
-      # WAIT WORKER
+      # WAIT WORKER (REAL CHECK)
       # =========================
       - name: Wait worker startup
         run: |
           echo "Esperando worker..."
-          sleep 15
+
+          for i in {1..30}; do
+
+            docker logs qa-backend-worker 2>&1 | grep -q "Escuchando eventos" && \
+              echo "Worker OK" && exit 0
+
+            echo "Intento $i - worker no listo"
+            sleep 2
+          done
+
+          echo "Worker no inició correctamente"
+          docker logs qa-backend-worker || true
+          exit 1
 
       # =========================
       # RUN TESTS
@@ -118,7 +159,7 @@ jobs:
           BACKEND_URL: http://localhost:8080
 
       # =========================
-      # DEBUG LOGS
+      # DEBUG LOGS (SIEMPRE)
       # =========================
       - name: Backend server logs
         if: always()
